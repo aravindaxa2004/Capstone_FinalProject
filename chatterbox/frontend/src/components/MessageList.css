@@ -1,0 +1,163 @@
+.message-list {
+  flex: 1;
+}
+
+.messages-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-icon {
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.messages-empty h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.messages-empty p {
+  color: var(--text-secondary);
+}
+
+.message-group {
+  margin-bottom: 16px;
+}
+
+.date-divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0 16px;
+}
+
+.date-divider::before,
+.date-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.date-divider span {
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.message {
+  display: flex;
+  padding: 8px 0;
+  position: relative;
+}
+
+.message:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.message.grouped {
+  padding-top: 2px;
+  padding-left: 52px;
+}
+
+.message-avatar {
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.message-author {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.you-indicator {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.message-time {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.message-text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.hover-time {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.message.grouped:hover .hover-time {
+  opacity: 1;
+}
+
+/* Own message styling */
+.message.own-message .avatar {
+  background: var(--primary);
+}
+
+/* Link styling in messages */
+.message-text a {
+  color: var(--primary-light);
+  text-decoration: underline;
+}
+
+.message-text a:hover {
+  text-decoration: none;
+}
+
+/* Code styling in messages */
+.message-text code {
+  background: var(--surface-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .message-text {
+    font-size: 14px;
+  }
+
+  .message-author {
+    font-size: 14px;
+  }
+}
