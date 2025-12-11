@@ -1,0 +1,143 @@
+/* Container styling for the main channel view */
+.channel-container {
+  max-width: 800px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background-color: #1e1e2f;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header section with title and description */
+.channel-header {
+  border-bottom: 1px solid #444660;
+  padding-bottom: 1rem;
+}
+
+.channel-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #aad4ff;
+}
+
+.channel-description {
+  margin-top: 0.25rem;
+  font-size: 1.1rem;
+  color: #b0b8d9;
+}
+.header-buttons {
+  display: flex;
+  gap: 1rem;          /* spacing between buttons */
+  margin-top: 1rem;   /* spacing from title/description */
+  flex-wrap: wrap;    /* wrap to next line on small screens */
+}
+
+.header-buttons button {
+  flex-shrink: 0;     /* prevent button from shrinking */
+}
+
+
+/* Join channel button styles with hover effect */
+.join-button, .exit-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background-color: #3a78ff;
+  color: white;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.3s ease;
+}
+
+.join-button:hover,
+.exit-button:hover {
+  background-color: #2a5fcc; /* or choose a color per button */
+}
+
+.back-button {
+  background-color: #3a78ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: #2a5fcc; /* darker gray */
+}
+
+/* Messages list area with scrolling and inset shadow */
+.messages-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #444660;
+  border-radius: 8px;
+  background-color: #2a2a40;
+  padding: 1rem;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+}
+/* Form below messages for sending new message */
+.send-form {
+  margin-top: 1rem;
+}
+
+/* Style for loading indicator text */
+.loading-text {
+  color: #888aad;
+  font-size: 1.2rem;
+  text-align: center;
+  margin-top: 3rem;
+}
+
+
+/* ----------- Mobile responsiveness ----------- */
+@media (max-width: 600px) {
+  .channel-container {
+    margin: 1rem;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .channel-title {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  .channel-description {
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .join-button {
+    width: 100%;
+    text-align: center;
+    padding: 0.75rem;
+    font-size: 1rem;
+  }
+
+  .messages-wrapper {
+    max-height: 300px;
+    padding: 0.75rem;
+  }
+
+  .send-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}

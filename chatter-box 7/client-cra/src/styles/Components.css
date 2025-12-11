@@ -1,0 +1,247 @@
+/* ----------- ChannelList styles ----------- */
+
+.channel-container {
+  max-width: 700px;
+  min-width: 150px;
+  margin: 2rem auto;
+  background-color: #1e1e2f;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(40, 40, 70, 0.8);
+  color: #ddd;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.channel-title {
+  font-size: 1.9rem;
+  margin-bottom: 1rem;
+  color: #abb2ff;
+  text-align: center;
+}
+
+.channel-form {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.channel-form-input {
+  flex-grow: 1;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #555577;
+  background-color: #2a2a40;
+  color: #eee;
+  transition: border-color 0.3s ease;
+}
+
+.channel-form-input::placeholder {
+  color: #8888bb;
+}
+
+.channel-form-input:focus {
+  outline: none;
+  border-color: #7687ff;
+  box-shadow: 0 0 8px #7687ff88;
+}
+
+.channel-button {
+  background-color: #7687ff;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  white-space: nowrap;
+}
+
+.channel-button:hover,
+.channel-button:focus {
+  background-color: #5a6bdd;
+}
+
+/* Channel list styling */
+.channel-list {
+  padding: 0;
+  margin: 0;
+}
+
+/* Each channel item */
+.channel-list li {
+  list-style: none;
+  margin-bottom: 0.6rem;
+  border-radius: 6px;
+  background-color: #2a2a40;
+  width: 100%;
+}
+
+/* Link styles filling the li */
+.channel-link {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  color: #a0a0ff;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.channel-link:hover,
+.channel-link:focus {
+  background-color: #444466;
+  color: #d0d0ff;
+  outline: none;
+}
+
+.channel-link:visited {
+  color: #7777bb;
+}
+
+.channel-link:active {
+  color: #c0c0ff;
+  background-color: #5a5a8a;
+}
+
+.message-row {
+  display: flex;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.message-row.self-row {
+  justify-content: flex-end; /* push current user messages to right */
+}
+
+.message-row.other-row {
+  justify-content: flex-start; /* push others to left */
+}
+
+/* Message bubble */
+.message-item {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  max-width: 70%;
+  word-wrap: break-word;
+  word-break: break-word;
+  text-align: left; /* text stays left inside bubble */
+}
+
+/* Align bubble content properly */
+.message-item.self {
+  background-color: #2d2d7a;
+  color: white;
+  border-top-right-radius: 0; /* optional: chat bubble style */
+}
+
+.message-item.other {
+  background-color: #1f1f3d;
+  color: white;
+  border-top-left-radius: 0; /* optional */
+}
+
+/* Optional: make timestamp right-aligned in self messages */
+.message-timestamp {
+  font-size: 0.75rem;
+  color: #7777aa;
+  margin-top: 0.25rem;
+  text-align: right; /* timestamp on the right for self messages */
+}
+
+/* ----------- SendMessageForm styles ----------- */
+
+.send-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.send-input {
+  flex-grow: 1;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #555577;
+  background-color: #2a2a40;
+  color: #eee;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.send-input::placeholder {
+  color: #8888bb;
+}
+
+.send-input:focus {
+  outline: none;
+  border-color: #7687ff;
+  box-shadow: 0 0 8px #7687ff88;
+}
+
+.send-button {
+  background-color: #7687ff;
+  color: #fff;
+  font-weight: 700;
+  padding: 0 1.3rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  white-space: nowrap;
+}
+
+.send-button:hover,
+.send-button:focus {
+  background-color: #5a6bdd;
+}
+
+/* ----------- Mobile responsiveness ----------- */
+@media (max-width: 600px) {
+  .channel-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  .channel-title {
+    font-size: 1.5rem;
+  }
+
+  .channel-form {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .channel-button {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+  }
+  .channel-form-input {
+    width: 100%;       
+    max-width: 100%;
+    box-sizing: border-box;
+    flex-grow: 0;      
+  }
+
+  .send-form {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .send-button {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+  }
+
+  .message-list {
+    max-height: 300px;
+    padding: 0.75rem;
+  }
+}
