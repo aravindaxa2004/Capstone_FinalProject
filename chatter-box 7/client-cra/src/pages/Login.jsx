@@ -1,77 +1,117 @@
+/**
+ * Login Page Component
+ * Handles user authentication
+ */
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import { useNavigate, Link } from 'react-router-dom';
+import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import '../styles/AuthForm.css';
 
 export default function Login() {
-  // Form state for email and password, and error message state
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [errorMsg, setErrorMsg] = useState('');
-  const { login } = useAuth();
-  const nav = useNavigate();
+  const [credentials, setCredentials] = useState({
+    email: '',
+    password: ''
+  });
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { login, token } = useAuth();
+  const navigate = useNavigate();
 
+  // Redirect if already logged in
   useEffect(() => {
-    const token = localStorage.getItem('token');
     if (token) {
-      nav('/', { replace: true });
+      navigate('/', { replace: true });
     }
-  }, [nav]);
+  }, [token, navigate]);
 
-  // Update form state on input change
-  const handle = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  // Update form fields
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setCredentials(prev => ({ ...prev, [name]: value }));
+  };
 
-  // Handle form submission: authenticate and redirect on success
-  const submit = async (e) => {
-    e.preventDefault();
+  // Process login submission
+  const handleFormSubmit = async (event) => {
+    event.preventDefault();
+    setErrorMessage('');
+    setIsLoading(true);
+
     try {
-      const res = await api.post('/auth/login', form);
+      const response = await apiClient.post('/auth/login', credentials);
 
-      if (res.data.success) {
-        // Access user and token from data
-        const { user, token } = res.data.data;
-        login(user, token);
-        nav('/', { replace: true });
+      if (response.data.success) {
+        const { user, token: authToken } = response.data.data;
+        login(user, authToken);
+        navigate('/', { replace: true });
       } else {
-        // Backend returned success: false
-        setErrorMsg(res.data.message || 'Login failed');
+        setErrorMessage(response.data.message || 'Login failed');
       }
-    } catch (err) {
-      // Network or server error
-      setErrorMsg(err.response?.data?.message || 'Server error');
+    } catch (error) {
+      const message = error.response?.data?.message || 'Connection error. Please try again.';
+      setErrorMessage(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-
-  // Clear error message after 5 seconds
+  // Auto-clear error after delay
   useEffect(() => {
-    if (errorMsg) {
-      const timer = setTimeout(() => setErrorMsg(''), 5000);
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(''), 5000);
       return () => clearTimeout(timer);
     }
-  }, [errorMsg]);
+  }, [errorMessage]);
 
   return (
-    <form className="auth-form" onSubmit={submit}>
-      <h2>Login</h2>
-      {errorMsg && <div className="error-message">{errorMsg}</div>}
-      <input
-        name="email"
-        type="email"
-        required
-        placeholder="Email"
-        value={form.email}
-        onChange={handle}
-      />
-      <input
-        name="password"
-        type="password"
-        required
-        placeholder="Password"
-        value={form.password}
-        onChange={handle}
-      />
-      <button type="submit">Login</button>
-    </form>
+    <div className="auth-container">
+      <form className="auth-form" onSubmit={handleFormSubmit}>
+        <div className="auth-header">
+          <h2>Welcome Back</h2>
+          <p>Sign in to continue to ChatterBox</p>
+        </div>
+
+        {errorMessage && (
+          <div className="alert alert-error">{errorMessage}</div>
+        )}
+
+        <div className="form-field">
+          <label htmlFor="email">Email Address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            placeholder="you@example.com"
+            value={credentials.email}
+            onChange={handleInputChange}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            placeholder="Enter your password"
+            value={credentials.password}
+            onChange={handleInputChange}
+            disabled={isLoading}
+          />
+        </div>
+
+        <button type="submit" className="btn-submit" disabled={isLoading}>
+          {isLoading ? 'Signing in...' : 'Sign In'}
+        </button>
+
+        <p className="auth-footer">
+          Don't have an account? <Link to="/register">Create one</Link>
+        </p>
+      </form>
+    </div>
   );
 }

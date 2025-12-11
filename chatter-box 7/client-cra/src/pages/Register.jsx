@@ -1,67 +1,123 @@
+/**
+ * Registration Page Component
+ * Handles new user account creation
+ */
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import { useNavigate, Link } from 'react-router-dom';
+import apiClient from '../api/axios';
 import '../styles/AuthForm.css';
 
 export default function Register() {
-  // Form state for username, email, and password
-  const [form, setForm] = useState({ username: '', email: '', password: '' });
-  const nav = useNavigate();
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: ''
+  });
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const navigate = useNavigate();
 
-  // Update form state on input change
-  const handle = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  // Update form fields
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-  // Handle form submission: send data to register endpoint and navigate to login
-  const submit = async (e) => {
-    e.preventDefault();
+  // Process registration
+  const handleFormSubmit = async (event) => {
+    event.preventDefault();
+    setErrorMessage('');
+    setIsLoading(true);
+
+    // Basic validation
+    if (formData.password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters');
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const res = await api.post('/auth/register', form);
+      const response = await apiClient.post('/auth/register', formData);
 
-      // Backend sends: { success: true, message: "...", data: {...} }
-      alert(res.data.message || "Registered successfully");
-      nav('/login');
-    } catch (err) {
-      // Backend sends: { success: false, message: "..." }
-      const errorMessage = err.response?.data?.message || "Registration failed";
-      alert(errorMessage);
-
-      setForm({
-        username: "",
-        email: "",
-        password: ""
-      });
+      if (response.data.success) {
+        alert('Account created! Please sign in.');
+        navigate('/login');
+      } else {
+        setErrorMessage(response.data.message || 'Registration failed');
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || 'Registration failed. Please try again.';
+      setErrorMessage(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <form className="auth-form" onSubmit={submit}>
-      <h2>Register</h2>
-      <input
-        name="username"
-        required
-        placeholder="Username"
-        value={form.username}
-        onChange={handle}
-      />
-      <input
-        name="email"
-        type="email"
-        required
-        placeholder="Email"
-        value={form.email}
-        onChange={handle}
-      />
-      <input
-        name="password"
-        type="password"
-        required
-        placeholder="Password"
-        value={form.password}
-        onChange={handle}
-      />
-      <button type="submit">Register</button>
-    </form>
+    <div className="auth-container">
+      <form className="auth-form" onSubmit={handleFormSubmit}>
+        <div className="auth-header">
+          <h2>Create Account</h2>
+          <p>Join ChatterBox and start collaborating</p>
+        </div>
+
+        {errorMessage && (
+          <div className="alert alert-error">{errorMessage}</div>
+        )}
+
+        <div className="form-field">
+          <label htmlFor="username">Username</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            required
+            placeholder="Choose a username"
+            value={formData.username}
+            onChange={handleInputChange}
+            disabled={isLoading}
+            minLength={3}
+          />
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="email">Email Address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            placeholder="you@example.com"
+            value={formData.email}
+            onChange={handleInputChange}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            placeholder="Minimum 6 characters"
+            value={formData.password}
+            onChange={handleInputChange}
+            disabled={isLoading}
+            minLength={6}
+          />
+        </div>
+
+        <button type="submit" className="btn-submit" disabled={isLoading}>
+          {isLoading ? 'Creating Account...' : 'Create Account'}
+        </button>
+
+        <p className="auth-footer">
+          Already have an account? <Link to="/login">Sign in</Link>
+        </p>
+      </form>
+    </div>
   );
 }

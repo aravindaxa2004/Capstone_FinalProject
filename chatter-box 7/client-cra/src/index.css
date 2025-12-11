@@ -1,11 +1,70 @@
-html, body, #root {
-  height: 100%;
+/**
+ * Global Styles
+ * Base styling for the entire application
+ */
+
+:root {
+  --color-primary: #0d9488;
+  --color-primary-light: #14b8a6;
+  --color-primary-dark: #0f766e;
+  --color-background: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-light: #334155;
+  --color-text: #f1f5f9;
+  --color-text-muted: #94a3b8;
+  --color-border: #475569;
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+}
+
+*, *::before, *::after {
   margin: 0;
   padding: 0;
-  background-color: #121217; /* Dark background */
-  color: #e0e0e0; /* Light text */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
-  line-height: 1.5;
-  min-width: 300px;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--color-primary-light);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-primary);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, textarea {
+  font-family: inherit;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
 }

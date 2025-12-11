@@ -1,48 +1,71 @@
-import React, { useRef, useEffect,useState } from 'react';
-import '../styles/Components.css';
+/**
+ * Message List Component
+ * Displays chat messages with auto-scroll
+ */
+import React, { useRef, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import '../styles/Components.css';
 
 export default function MessageList({ messages }) {
   const { user: currentUser } = useAuth();
-  const messagesEndRef = useRef(null);
-  const wrapperRef = useRef(null);
+  const containerRef = useRef(null);
+  const scrollAnchorRef = useRef(null);
+  const [previousCount, setPreviousCount] = useState(0);
 
-  const [prevLength, setPrevLength] = useState(messages.length);
-
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper) return; 
-    const isAtBottom = wrapper.scrollHeight - wrapper.scrollTop === wrapper.clientHeight;
+    const container = containerRef.current;
+    if (!container) return;
 
-    // Only scroll if user is at bottom or new messages are added
-    if (messages.length > prevLength || isAtBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const isNearBottom = 
+      container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
+
+    // Scroll if user is near bottom or new messages arrived
+    if (messages.length > previousCount || isNearBottom) {
+      scrollAnchorRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
 
-    setPrevLength(messages.length);
-  }, [messages, prevLength]);
+    setPreviousCount(messages.length);
+  }, [messages, previousCount]);
 
-  if (!messages?.length) {
-    return <p className="text-muted">No messages yet.</p>;
+  // Format timestamp for display
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Empty state
+  if (!messages || messages.length === 0) {
+    return (
+      <div className="empty-messages">
+        <p>No messages yet. Start the conversation!</p>
+      </div>
+    );
   }
 
   return (
-    <div className="messages-wrapper" ref={wrapperRef}>
-      {messages.map((msg, idx) => {
-        const isSelf = currentUser?.id === msg.sender?._id;
+    <div className="message-list" ref={containerRef}>
+      {messages.map((msg, index) => {
+        const isOwnMessage = currentUser?.id === msg.sender?._id;
+        const senderName = msg.sender?.username || 'Unknown';
+
         return (
-          <div key={msg._id || idx} className={`message-row ${isSelf ? 'self-row' : 'other-row'}`}>
-            <div className={`message-item ${isSelf ? 'self' : 'other'}`}>
-              <span className="message-sender">{msg.sender?.username ?? 'Unknown'}</span>
-              : <span className="message-content">{msg.content}</span>
-              <div className="message-timestamp">
-                {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : ''}
-              </div>
+          <div
+            key={msg._id || index}
+            className={`message-bubble ${isOwnMessage ? 'own' : 'other'}`}
+          >
+            <div className="message-header">
+              <span className="sender-name">{senderName}</span>
+              <span className="message-time">{formatTime(msg.timestamp)}</span>
             </div>
+            <p className="message-text">{msg.content}</p>
           </div>
         );
       })}
-      <div ref={messagesEndRef} />
+      <div ref={scrollAnchorRef} />
     </div>
   );
 }

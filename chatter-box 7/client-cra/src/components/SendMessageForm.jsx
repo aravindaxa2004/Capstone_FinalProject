@@ -1,45 +1,68 @@
+/**
+ * Send Message Form Component
+ * Input form for composing and sending messages
+ */
 import React, { useState } from 'react';
-import api from '../api/axios';
+import apiClient from '../api/axios';
 import '../styles/Components.css';
 
-export default function SendMessageForm({ channelId, onNewMessage }) {
-  const [content, setContent] = useState('');
-  const [sending, setSending] = useState(false);
+export default function SendMessageForm({ channelId, onMessageSent }) {
+  const [messageText, setMessageText] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
-  const send = async (e) => {
-    e.preventDefault();
-    if (!content.trim()) return; // Prevent empty messages
-    setSending(true);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const trimmedMessage = messageText.trim();
+    if (!trimmedMessage) return;
+
+    setIsSending(true);
 
     try {
-      const res = await api.post(`/channels/${channelId}/messages`, { content });
-      const newMsg = res.data.data;
-      if (newMsg) {
-        onNewMessage(newMsg);
-        setContent('');
-      } else {
-        console.warn('API returned empty message');
+      const response = await apiClient.post(`/channels/${channelId}/messages`, {
+        content: trimmedMessage
+      });
+
+      const sentMessage = response.data?.data;
+      
+      if (sentMessage) {
+        onMessageSent(sentMessage);
+        setMessageText('');
       }
-    } catch (err) {
-      console.error('Failed to send message:', err);
-      alert('Failed to send message.');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      alert('Could not send message. Please try again.');
     } finally {
-      setSending(false);
+      setIsSending(false);
+    }
+  };
+
+  // Handle Enter key to send
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      handleSubmit(event);
     }
   };
 
   return (
-    <form className="send-form" onSubmit={send}>
+    <form className="message-form" onSubmit={handleSubmit}>
       <input
-        className="send-input"
-        placeholder="Type a message..."
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        disabled={sending}
-        required
+        type="text"
+        className="message-input"
+        placeholder="Type your message..."
+        value={messageText}
+        onChange={(e) => setMessageText(e.target.value)}
+        onKeyDown={handleKeyDown}
+        disabled={isSending}
+        maxLength={2000}
       />
-      <button className="send-button" type="submit" disabled={sending || !content.trim()}>
-        {sending ? 'Sending...' : 'Send'}
+      <button
+        type="submit"
+        className="btn-send"
+        disabled={isSending || !messageText.trim()}
+      >
+        {isSending ? '...' : 'Send'}
       </button>
     </form>
   );

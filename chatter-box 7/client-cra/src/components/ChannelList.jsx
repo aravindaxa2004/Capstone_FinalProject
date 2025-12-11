@@ -1,34 +1,38 @@
+/**
+ * Channel List Component
+ * Displays available channels and creation form
+ */
 import React, { useEffect, useState } from 'react';
-import api from '../api/axios';
 import { Link, useNavigate } from 'react-router-dom';
+import apiClient from '../api/axios';
 import '../styles/Components.css';
 
 export default function ChannelList() {
-  const [channels, setChannels] = useState([]);
-  const [name, setName] = useState('');
-  const [desc, setDesc] = useState('');
-
+  const [channelList, setChannelList] = useState([]);
+  const [newChannelName, setNewChannelName] = useState('');
+  const [newChannelDesc, setNewChannelDesc] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  
   const navigate = useNavigate();
 
-  // Fetch public channels on mount
+  // Load channels on mount
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.warn("No token found. Redirecting to /login...");
-      navigate("/login");
+    const authToken = localStorage.getItem('token');
+    
+    if (!authToken) {
+      navigate('/login');
       return;
     }
 
     const fetchChannels = async () => {
       try {
-        const res = await api.get("/channels/public", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        // ✅ Unwrap the `data` field and default to empty array
-        setChannels(res.data?.data || []);
-      } catch (err) {
-        console.error("Error fetching public channels:", err);
-        if (err.response?.status === 401) navigate("/login");
+        const response = await apiClient.get('/channels/public');
+        setChannelList(response.data?.data || []);
+      } catch (error) {
+        console.error('Failed to fetch channels:', error);
+        if (error.response?.status === 401) {
+          navigate('/login');
+        }
       }
     };
 
@@ -36,52 +40,77 @@ export default function ChannelList() {
   }, [navigate]);
 
   // Create new channel
-  const createChannel = async (e) => {
-    e.preventDefault();
+  const handleCreateChannel = async (event) => {
+    event.preventDefault();
+    
+    if (!newChannelName.trim()) return;
+    
+    setIsCreating(true);
+
     try {
-      const res = await api.post('/channels', { name, description: desc });
-      // ✅ unwrap backend response
-      setChannels([res.data?.data || res.data, ...channels]);
-      setName('');
-      setDesc('');
-    } catch (err) {
-      console.error("Failed to create channel:", err);
-      alert(err.response?.data?.message || "Server error");
+      const response = await apiClient.post('/channels', {
+        name: newChannelName.trim(),
+        description: newChannelDesc.trim()
+      });
+
+      const createdChannel = response.data?.data || response.data;
+      setChannelList(prev => [createdChannel, ...prev]);
+      setNewChannelName('');
+      setNewChannelDesc('');
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to create channel';
+      alert(message);
+    } finally {
+      setIsCreating(false);
     }
   };
 
   return (
-    <div className="channel-container">
-      <h2 className="channel-title">Public Channels</h2>
+    <div className="channel-list-container">
+      <h2 className="section-title">Available Channels</h2>
 
-      <form className="channel-form" onSubmit={createChannel}>
-        <input
-          className="channel-form-input"
-          required
-          placeholder="Channel name"
-          value={name}
-          onChange={e => setName(e.target.value)}
-        />
-        <input
-          className="channel-form-input"
-          placeholder="Description"
-          value={desc}
-          onChange={e => setDesc(e.target.value)}
-        />
-        <button className="channel-button" type="submit">Create</button>
+      <form className="create-channel-form" onSubmit={handleCreateChannel}>
+        <div className="form-row">
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Channel name"
+            value={newChannelName}
+            onChange={(e) => setNewChannelName(e.target.value)}
+            required
+            disabled={isCreating}
+          />
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Description (optional)"
+            value={newChannelDesc}
+            onChange={(e) => setNewChannelDesc(e.target.value)}
+            disabled={isCreating}
+          />
+          <button type="submit" className="btn-create" disabled={isCreating}>
+            {isCreating ? 'Creating...' : 'Create'}
+          </button>
+        </div>
       </form>
 
-      <ul className="channel-list">
-        {Array.isArray(channels) && channels.length > 0 ? (
-          channels.map(ch => (
-            <li key={ch._id}>
-              <Link to={`/channels/${ch._id}`} className="channel-link">
-                {ch.name}
+      <ul className="channels-grid">
+        {channelList.length > 0 ? (
+          channelList.map((channel) => (
+            <li key={channel._id} className="channel-card">
+              <Link to={`/channels/${channel._id}`} className="channel-link">
+                <span className="channel-icon">#</span>
+                <span className="channel-name">{channel.name}</span>
+                {channel.description && (
+                  <span className="channel-description">{channel.description}</span>
+                )}
               </Link>
             </li>
           ))
         ) : (
-          <li className="text-muted">No channels available.</li>
+          <li className="empty-state">
+            No channels available. Create the first one!
+          </li>
         )}
       </ul>
     </div>

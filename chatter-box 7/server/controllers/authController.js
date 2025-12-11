@@ -1,85 +1,135 @@
+/**
+ * Authentication Controller
+ * Handles user registration and login operations
+ */
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import UserModel from '../models/User.js';
 
-// Handle user registration
-export const register = async (req, res) => {
+/**
+ * Register a new user account
+ * POST /api/auth/register
+ */
+export const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
-
+  
+  // Validate required fields
+  if (!username || !email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'All fields are required: username, email, password'
+    });
+  }
+  
   try {
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-    if (existingUser) {
+    // Check for existing account with same credentials
+    const existingAccount = await UserModel.findOne({
+      $or: [{ email: email.toLowerCase() }, { username }]
+    });
+    
+    if (existingAccount) {
+      const conflictField = existingAccount.email === email.toLowerCase() 
+        ? 'Email address' 
+        : 'Username';
       return res.status(400).json({
         success: false,
-        message: existingUser.email === email
-          ? "Email already registered"
-          : "Username already taken"
+        message: `${conflictField} is already in use`
       });
     }
-
-    // Hash the password before saving
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(password, salt);
-
-    // Create and save the new user
-    const user = await User.create({ username, email, password: hash });
-
+    
+    // Generate password hash
+    const saltRounds = 12;
+    const passwordSalt = await bcrypt.genSalt(saltRounds);
+    const hashedPassword = await bcrypt.hash(password, passwordSalt);
+    
+    // Create new user record
+    const newUser = await UserModel.create({
+      username,
+      email: email.toLowerCase(),
+      password: hashedPassword
+    });
+    
     return res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      data: { userId: user._id, username: user.username, email: user.email }
+      message: 'Account created successfully',
+      data: {
+        userId: newUser._id,
+        username: newUser.username,
+        email: newUser.email
+      }
     });
-  } catch (err) {
-    console.error("Error in register:", err.message);
+    
+  } catch (serverError) {
+    console.error('Registration error:', serverError.message);
     return res.status(500).json({
       success: false,
-      message: "Server error while registering user"
+      message: 'An error occurred during registration'
     });
   }
 };
 
-// Handle user login
-export const login = async (req, res) => {
+/**
+ * Authenticate user and issue JWT token
+ * POST /api/auth/login
+ */
+export const authenticateUser = async (req, res) => {
   const { email, password } = req.body;
-
+  
+  // Validate required fields
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email and password are required'
+    });
+  }
+  
   try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({
+    // Find user by email
+    const userAccount = await UserModel.findOne({ email: email.toLowerCase() });
+    
+    if (!userAccount) {
+      return res.status(401).json({
         success: false,
-        message: "Invalid credentials"
+        message: 'Invalid email or password'
       });
     }
-
-    // Compare provided password with stored hash
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({
+    
+    // Verify password
+    const passwordValid = await bcrypt.compare(password, userAccount.password);
+    
+    if (!passwordValid) {
+      return res.status(401).json({
         success: false,
-        message: "Invalid credentials"
+        message: 'Invalid email or password'
       });
     }
-
-    // Create JWT token
-    const token = jwt.sign(
-      { id: user._id },
+    
+    // Generate JWT token
+    const tokenPayload = { id: userAccount._id };
+    const accessToken = jwt.sign(
+      tokenPayload,
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
-
+    
     return res.status(200).json({
       success: true,
-      message: "Login successful",
+      message: 'Authentication successful',
       data: {
-        token,
-        user: { id: user._id, username: user.username, email: user.email }
+        token: accessToken,
+        user: {
+          id: userAccount._id,
+          username: userAccount.username,
+          email: userAccount.email
+        }
       }
     });
-  } catch (err) {
-    console.error("Error in login:", err.message);
+    
+  } catch (serverError) {
+    console.error('Login error:', serverError.message);
     return res.status(500).json({
       success: false,
-      message: "Server error while logging in"
+      message: 'An error occurred during authentication'
     });
   }
 };

@@ -1,29 +1,52 @@
+/**
+ * ChatterBox API Server
+ * Main entry point for the Express application
+ */
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-import authRoutes from './routes/auth.js';
+// Import route modules
+import authenticationRoutes from './routes/auth.js';
 import channelRoutes from './routes/channels.js';
 import messageRoutes from './routes/messages.js';
 
+// Load environment configuration
 dotenv.config();
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+// Initialize Express application
+const application = express();
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// Configure middleware
+application.use(cors());
+application.use(express.json());
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/channels', channelRoutes);
-app.use('/api/channels', messageRoutes); // messages nested under /api/channels/:id/messages
+// Establish database connection
+const initializeDatabase = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('✅ Database connection established successfully');
+  } catch (connectionError) {
+    console.error('❌ Database connection failed:', connectionError.message);
+    process.exit(1);
+  }
+};
 
-// Start Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+initializeDatabase();
+
+// Mount API routes
+application.use('/api/auth', authenticationRoutes);
+application.use('/api/channels', channelRoutes);
+application.use('/api/channels', messageRoutes);
+
+// Health check endpoint
+application.get('/api/status', (req, res) => {
+  res.json({ status: 'operational', timestamp: new Date().toISOString() });
+});
+
+// Launch server
+const SERVER_PORT = process.env.PORT || 5000;
+application.listen(SERVER_PORT, () => {
+  console.log(`🚀 ChatterBox API running on port ${SERVER_PORT}`);
+});

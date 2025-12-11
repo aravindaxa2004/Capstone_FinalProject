@@ -1,143 +1,168 @@
-import React, { useEffect, useState } from 'react';
+/**
+ * Channel Page Component
+ * Displays channel details, messages, and messaging interface
+ */
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import MessageList from '../components/MessageList';
 import SendMessageForm from '../components/SendMessageForm';
 import '../styles/Channel.css';
 
 export default function Channel() {
-  const { id } = useParams();
+  const { id: channelId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [channel, setChannel] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const [channelData, setChannelData] = useState(null);
+  const [messageList, setMessageList] = useState([]);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [channelNotFound, setChannelNotFound] = useState(false);
 
-  const [messages, setMessages] = useState([]);
-  const [isMember, setIsMember] = useState(false);
+  // Fetch channel information
+  const loadChannelData = useCallback(async () => {
+    setIsLoading(true);
+    setChannelNotFound(false);
 
-  // Fetch channel details (with members) and set membership flag
-  const fetchChannel = async () => {
-    setLoading(true);
-    setNotFound(false);
     try {
-      const res = await api.get(`/channels/${id}`);
-      if (!res.data?.data) {
-        setNotFound(true);
-        setChannel(null);
+      const response = await apiClient.get(`/channels/${channelId}`);
+      
+      if (!response.data?.data) {
+        setChannelNotFound(true);
         return;
       }
-      setChannel(res.data.data);
-      const members = res.data.data.members || [];
-      const memberIds = members.map(m => m._id);
-      setIsMember(memberIds.includes(user.id));
-    } catch (err) {
-      if (err.response?.status === 404) {
-        setNotFound(true);
-        setChannel(null);
+
+      const channel = response.data.data;
+      setChannelData(channel);
+
+      // Check if current user is subscribed
+      const memberIds = (channel.members || []).map(m => m._id);
+      setIsSubscribed(memberIds.includes(user.id));
+    } catch (error) {
+      if (error.response?.status === 404) {
+        setChannelNotFound(true);
       } else {
-        console.error(err);
-        alert('Failed to load channel. Please try again later.');
+        console.error('Failed to load channel:', error);
       }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  };
+  }, [channelId, user.id]);
 
-  useEffect(() => {
-    fetchChannel();
-  }, [id, user.id]);
-
-  // Load messages safely
-  const loadMessages = async () => {
+  // Fetch channel messages
+  const loadMessages = useCallback(async () => {
     try {
-      const res = await api.get(`/channels/${id}/messages`);
-      const msgs = res.data?.data || [];
-      if (Array.isArray(msgs)) {
-        setMessages(msgs);
-      } else {
-        console.warn('API returned invalid messages, skipping update');
+      const response = await apiClient.get(`/channels/${channelId}/messages`);
+      const messages = response.data?.data || [];
+      
+      if (Array.isArray(messages)) {
+        setMessageList(messages);
       }
-    } catch (err) {
-      console.error('Failed to load messages:', err);
+    } catch (error) {
+      console.error('Failed to load messages:', error);
     }
-  };
+  }, [channelId]);
 
-  // Join / subscribe channel
-  const handleJoin = async () => {
-    try {
-      await api.post(`/channels/${id}/subscription`);
-      await fetchChannel();
-      await loadMessages();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to join the channel.');
-    }
-  };
-
-  // Leave / unsubscribe from channel
-  const handleLeave = async () => {
-    try {
-      await api.delete(`/channels/${id}/subscription`);
-      setIsMember(false);
-      setMessages([]);
-      await fetchChannel();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to leave the channel.');
-    }
-  };
-
-  // Poll messages if member
+  // Initial data load
   useEffect(() => {
-    if (!isMember) return;
-    loadMessages();
-    const interval = setInterval(loadMessages, 3000);
-    return () => clearInterval(interval);
-  }, [isMember, id]);
+    loadChannelData();
+  }, [loadChannelData]);
 
-  if (loading) return <p className="loading-text">Loading…</p>;
-  if (notFound) return <p className="text-muted">Channel not found.</p>;
+  // Poll for new messages when subscribed
+  useEffect(() => {
+    if (!isSubscribed) return;
+
+    loadMessages();
+    const pollInterval = setInterval(loadMessages, 3000);
+    
+    return () => clearInterval(pollInterval);
+  }, [isSubscribed, loadMessages]);
+
+  // Subscribe to channel
+  const handleSubscribe = async () => {
+    try {
+      await apiClient.post(`/channels/${channelId}/subscription`);
+      await loadChannelData();
+      await loadMessages();
+    } catch (error) {
+      alert('Failed to subscribe to channel');
+    }
+  };
+
+  // Unsubscribe from channel
+  const handleUnsubscribe = async () => {
+    try {
+      await apiClient.delete(`/channels/${channelId}/subscription`);
+      setIsSubscribed(false);
+      setMessageList([]);
+      await loadChannelData();
+    } catch (error) {
+      alert('Failed to unsubscribe from channel');
+    }
+  };
+
+  // Handle new message sent
+  const handleNewMessage = (message) => {
+    setMessageList(prev => [...prev, message]);
+  };
+
+  // Navigate back to home
+  const goBack = () => navigate('/');
+
+  // Loading state
+  if (isLoading) {
+    return <p className="status-message">Loading channel...</p>;
+  }
+
+  // Not found state
+  if (channelNotFound) {
+    return <p className="status-message error">Channel not found</p>;
+  }
 
   return (
-    <div className="channel-container">
-      <div className="channel-header">
-        <h2 className="channel-title">{channel?.name}</h2>
-        <p className="channel-description">{channel?.description}</p>
+    <div className="channel-page">
+      <header className="channel-header">
+        <div className="channel-info">
+          <h2 className="channel-name">{channelData?.name}</h2>
+          {channelData?.description && (
+            <p className="channel-desc">{channelData.description}</p>
+          )}
+        </div>
 
-        <div className="header-buttons">
-          <button className="back-button" onClick={() => navigate('/')}>
-            Back
+        <div className="channel-actions">
+          <button className="btn-secondary" onClick={goBack}>
+            ← Back
           </button>
-
-          {isMember && (
-            <button className="exit-button" onClick={handleLeave}>
+          {isSubscribed && (
+            <button className="btn-danger" onClick={handleUnsubscribe}>
               Unsubscribe
             </button>
           )}
         </div>
-      </div>
+      </header>
 
-      {!isMember ? (
-        <button className="join-button" onClick={handleJoin}>
-          Subscribe
-        </button>
+      {!isSubscribed ? (
+        <div className="subscribe-prompt">
+          <p>Subscribe to this channel to view and send messages</p>
+          <button className="btn-primary" onClick={handleSubscribe}>
+            Subscribe to Channel
+          </button>
+        </div>
       ) : (
-        <>
-          <div className="messages-wrapper">
-            <MessageList messages={messages || []} />
+        <div className="channel-content">
+          <div className="message-area">
+            <MessageList messages={messageList} />
           </div>
-          <div className="send-form">
+          <div className="input-area">
             <SendMessageForm
-              channelId={id}
-              onNewMessage={msg => setMessages(prev => [...prev, msg])}
+              channelId={channelId}
+              onMessageSent={handleNewMessage}
             />
           </div>
-        </>
+        </div>
       )}
     </div>
-
   );
 }

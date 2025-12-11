@@ -1,153 +1,198 @@
-import Channel from '../models/Channel.js';
-import User from '../models/User.js';
+/**
+ * Channel Controller
+ * Handles all channel-related operations
+ */
+import ChannelModel from '../models/Channel.js';
+import UserModel from '../models/User.js';
 
-// --------------------------------------------------
-// Create a new channel and add creator as a member
-// --------------------------------------------------
+/**
+ * Create a new channel
+ * POST /api/channels
+ */
 export const createChannel = async (req, res) => {
+  const { name, description } = req.body;
+  const creatorId = req.user.id;
+  
+  if (!name || name.trim() === '') {
+    return res.status(400).json({
+      success: false,
+      message: 'Channel name is required'
+    });
+  }
+  
   try {
-    const { name, description } = req.body;
-
-    const existing = await Channel.findOne({ name });
-    if (existing) {
+    // Verify channel name is unique
+    const duplicateChannel = await ChannelModel.findOne({ 
+      name: name.trim().toLowerCase() 
+    });
+    
+    if (duplicateChannel) {
       return res.status(409).json({
         success: false,
-        message: "Channel name already exists"
+        message: 'A channel with this name already exists'
       });
     }
-
-    const channel = await Channel.create({
-      name,
-      description,
-      createdBy: req.user.id,
-      members: [req.user.id]
+    
+    // Create channel with creator as initial member
+    const newChannel = await ChannelModel.create({
+      name: name.trim(),
+      description: description || '',
+      createdBy: creatorId,
+      members: [creatorId]
     });
-
-    await User.findByIdAndUpdate(req.user.id, {
-      $push: { joinedChannels: channel._id }
+    
+    // Add channel to user's joined list
+    await UserModel.findByIdAndUpdate(creatorId, {
+      $addToSet: { joinedChannels: newChannel._id }
     });
-
+    
     return res.status(201).json({
       success: true,
-      message: "Channel created successfully",
-      data: channel
+      message: 'Channel created successfully',
+      data: newChannel
     });
-  } catch (err) {
-    console.error("Error in createChannel:", err.message);
-    return res.status(400).json({
+    
+  } catch (error) {
+    console.error('Create channel error:', error.message);
+    return res.status(500).json({
       success: false,
-      message: err.message
+      message: 'Failed to create channel'
     });
   }
 };
 
-// --------------------------------------------------
-// Get list of public channels (excluding members)
-// --------------------------------------------------
+/**
+ * Get all public channels
+ * GET /api/channels/public
+ */
 export const getPublicChannels = async (req, res) => {
   try {
-    const channels = await Channel.find()
+    const channelList = await ChannelModel.find()
       .select('-members')
-      .sort('-createdAt')
+      .sort({ createdAt: -1 })
       .lean();
-
+    
     return res.status(200).json({
       success: true,
-      message: "Channels fetched successfully",
-      data: channels
+      message: 'Channels retrieved successfully',
+      data: channelList
     });
-  } catch (err) {
-    console.error("Error in getPublicChannels:", err.message);
+    
+  } catch (error) {
+    console.error('Fetch channels error:', error.message);
     return res.status(500).json({
       success: false,
-      message: "Server error while fetching channels"
+      message: 'Failed to retrieve channels'
     });
   }
 };
 
-// --------------------------------------------------
-// Add current user to channel members and vice versa
-// --------------------------------------------------
+/**
+ * Subscribe to a channel
+ * POST /api/channels/:id/subscription
+ */
 export const subscribeChannel = async (req, res) => {
+  const channelId = req.params.id;
+  const userId = req.user.id;
+  
   try {
-    const { id } = req.params;
-
-    await Channel.findByIdAndUpdate(id, {
-      $addToSet: { members: req.user.id }
-    });
-
-    await User.findByIdAndUpdate(req.user.id, {
-      $addToSet: { joinedChannels: id }
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Joined channel successfully"
-    });
-  } catch (err) {
-    console.error("Error in joinChannel:", err.message);
-    return res.status(400).json({
-      success: false,
-      message: err.message
-    });
-  }
-};
-
-// --------------------------------------------------
-// Get channel details including member usernames
-// --------------------------------------------------
-export const getChannelById = async (req, res) => {
-  try {
-    const channel = await Channel.findById(req.params.id)
-      .populate('members', 'username')
-      .lean();
-
-    if (!channel) {
+    const targetChannel = await ChannelModel.findById(channelId);
+    
+    if (!targetChannel) {
       return res.status(404).json({
         success: false,
-        message: "Channel not found"
+        message: 'Channel not found'
       });
     }
-
+    
+    // Add user to channel members
+    await ChannelModel.findByIdAndUpdate(channelId, {
+      $addToSet: { members: userId }
+    });
+    
+    // Add channel to user's list
+    await UserModel.findByIdAndUpdate(userId, {
+      $addToSet: { joinedChannels: channelId }
+    });
+    
     return res.status(200).json({
       success: true,
-      message: "Channel fetched successfully",
-      data: channel
+      message: 'Successfully subscribed to channel'
     });
-  } catch (err) {
-    console.error("Error in getChannelById:", err.message);
+    
+  } catch (error) {
+    console.error('Subscribe error:', error.message);
     return res.status(500).json({
       success: false,
-      message: "Server error while fetching channel"
+      message: 'Failed to subscribe to channel'
     });
   }
 };
 
-// --------------------------------------------------
-// Unsubscribe user from channel
-// --------------------------------------------------
-export const unsubscribeChannel = async (req, res) => {
+/**
+ * Get channel details with members
+ * GET /api/channels/:id
+ */
+export const getChannelById = async (req, res) => {
+  const channelId = req.params.id;
+  
   try {
-    const channelId = req.params.id;
-    const userId = req.user.id;
-
-    await Channel.findByIdAndUpdate(channelId, {
-      $pull: { members: userId }
-    });
-
-    await User.findByIdAndUpdate(userId, {
-      $pull: { joinedChannels: channelId }
-    });
-
+    const channelData = await ChannelModel.findById(channelId)
+      .populate('members', 'username email')
+      .populate('createdBy', 'username')
+      .lean();
+    
+    if (!channelData) {
+      return res.status(404).json({
+        success: false,
+        message: 'Channel not found'
+      });
+    }
+    
     return res.status(200).json({
       success: true,
-      message: "Successfully left the channel"
+      message: 'Channel details retrieved',
+      data: channelData
     });
-  } catch (err) {
-    console.error("Error in unsubscribeChannel:", err.message);
+    
+  } catch (error) {
+    console.error('Get channel error:', error.message);
     return res.status(500).json({
       success: false,
-      message: "Server error while leaving channel"
+      message: 'Failed to retrieve channel details'
+    });
+  }
+};
+
+/**
+ * Unsubscribe from a channel
+ * DELETE /api/channels/:id/subscription
+ */
+export const unsubscribeChannel = async (req, res) => {
+  const channelId = req.params.id;
+  const userId = req.user.id;
+  
+  try {
+    // Remove user from channel
+    await ChannelModel.findByIdAndUpdate(channelId, {
+      $pull: { members: userId }
+    });
+    
+    // Remove channel from user's list
+    await UserModel.findByIdAndUpdate(userId, {
+      $pull: { joinedChannels: channelId }
+    });
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Successfully unsubscribed from channel'
+    });
+    
+  } catch (error) {
+    console.error('Unsubscribe error:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to unsubscribe from channel'
     });
   }
 };

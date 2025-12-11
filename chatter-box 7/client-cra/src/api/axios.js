@@ -1,21 +1,45 @@
-// This file sets up a reusable Axios instance configured for the API backend
-
+/**
+ * API Configuration
+ * Axios instance with authentication interceptor
+ */
 import axios from 'axios';
 
-// Create an Axios instance with the base URL of the API
-const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // Adjust as needed for your backend URL
+// Create configured axios instance
+const apiClient = axios.create({
+  baseURL: 'http://localhost:5000/api',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
-// Attach a request interceptor to include the JWT token automatically in headers
-api.interceptors.request.use((config) => {
-  // Get the JWT token from localStorage
-  const token = localStorage.getItem('token');
+// Request interceptor to attach auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    const authToken = localStorage.getItem('token');
+    
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`;
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-  // If token exists, add it as a Bearer token in the Authorization header
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+// Response interceptor for error handling
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear invalid session
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+    return Promise.reject(error);
+  }
+);
 
-  return config;
-});
-
-export default api;
+export default apiClient;

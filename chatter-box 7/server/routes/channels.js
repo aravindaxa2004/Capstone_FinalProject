@@ -1,5 +1,9 @@
+/**
+ * Channel Routes
+ * Handles channel CRUD operations
+ */
 import express from 'express';
-import auth from '../middleware/authMiddleware.js';
+import validateToken from '../middleware/authMiddleware.js';
 import {
   createChannel,
   getPublicChannels,
@@ -8,13 +12,13 @@ import {
   unsubscribeChannel
 } from '../controllers/channelController.js';
 
-const router = express.Router();
+const channelRouter = express.Router();
 
-// Channel routes (all protected by auth middleware)
-router.post('/', auth, createChannel);
-router.get('/public', auth, getPublicChannels);
-router.post('/:id/subscription', auth, subscribeChannel);
-router.get('/:id', auth, getChannelById);
-router.delete('/:id/subscription', auth, unsubscribeChannel); 
+// All routes require authentication
+channelRouter.post('/', validateToken, createChannel);
+channelRouter.get('/public', validateToken, getPublicChannels);
+channelRouter.post('/:id/subscription', validateToken, subscribeChannel);
+channelRouter.get('/:id', validateToken, getChannelById);
+channelRouter.delete('/:id/subscription', validateToken, unsubscribeChannel);
 
-export default router;
+export default channelRouter;

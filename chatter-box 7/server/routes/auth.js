@@ -1,13 +1,16 @@
+/**
+ * Authentication Routes
+ * Handles user registration and login endpoints
+ */
 import express from 'express';
-import { register, login } from '../controllers/authController.js';
+import { registerUser, authenticateUser } from '../controllers/authController.js';
 
-const router = express.Router();
+const authRouter = express.Router();
 
-// Route for new user registration
-router.post('/register', register);
+// Register new account
+authRouter.post('/register', registerUser);
 
-// Route for user login
-router.post('/login', login);
+// Login to existing account
+authRouter.post('/login', authenticateUser);
 
-// Export the router to be used in the main app
-export default router;
+export default authRouter;

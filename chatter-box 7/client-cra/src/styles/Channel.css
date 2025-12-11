@@ -1,143 +1,172 @@
-/* Container styling for the main channel view */
-.channel-container {
-  max-width: 800px;
-  margin: 3rem auto;
+/**
+ * Channel Page Styles
+ * Styling for the individual channel view
+ */
+
+.channel-page {
+  max-width: 900px;
+  margin: 2rem auto;
   padding: 2rem;
-  background-color: #1e1e2f;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  color: #e0e0e0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-/* Header section with title and description */
 .channel-header {
-  border-bottom: 1px solid #444660;
-  padding-bottom: 1rem;
-}
-
-.channel-title {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #aad4ff;
-}
-
-.channel-description {
-  margin-top: 0.25rem;
-  font-size: 1.1rem;
-  color: #b0b8d9;
-}
-.header-buttons {
   display: flex;
-  gap: 1rem;          /* spacing between buttons */
-  margin-top: 1rem;   /* spacing from title/description */
-  flex-wrap: wrap;    /* wrap to next line on small screens */
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #334155;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.header-buttons button {
-  flex-shrink: 0;     /* prevent button from shrinking */
+.channel-info {
+  flex: 1;
+  min-width: 200px;
 }
 
+.channel-name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #14b8a6;
+  margin: 0 0 0.25rem 0;
+}
 
-/* Join channel button styles with hover effect */
-.join-button, .exit-button {
+.channel-desc {
+  color: #94a3b8;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.channel-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
   font-weight: 600;
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  color: white;
   border: none;
   border-radius: 8px;
-  background-color: #3a78ff;
-  color: white;
   cursor: pointer;
-  align-self: flex-start;
-  transition: background-color 0.3s ease;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.join-button:hover,
-.exit-button:hover {
-  background-color: #2a5fcc; /* or choose a color per button */
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(13, 148, 136, 0.3);
 }
 
-.back-button {
-  background-color: #3a78ff;
-  color: white;
-  border: none;
-  border-radius: 8px;
+.btn-secondary {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
   font-weight: 600;
+  background-color: #334155;
+  color: #f1f5f9;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s;
 }
 
-.back-button:hover {
-  background-color: #2a5fcc; /* darker gray */
+.btn-secondary:hover {
+  background-color: #475569;
 }
 
-/* Messages list area with scrolling and inset shadow */
-.messages-wrapper {
+.btn-danger {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background-color: transparent;
+  color: #f87171;
+  border: 1px solid #f87171;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-danger:hover {
+  background-color: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+.subscribe-prompt {
+  text-align: center;
+  padding: 3rem 2rem;
+  background-color: #0f172a;
+  border-radius: 10px;
+  border: 1px dashed #475569;
+}
+
+.subscribe-prompt p {
+  color: #94a3b8;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.channel-content {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid #444660;
-  border-radius: 8px;
-  background-color: #2a2a40;
-  padding: 1rem;
-  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
-}
-/* Form below messages for sending new message */
-.send-form {
-  margin-top: 1rem;
+  gap: 1rem;
 }
 
-/* Style for loading indicator text */
-.loading-text {
-  color: #888aad;
-  font-size: 1.2rem;
+.message-area {
+  flex: 1;
+}
+
+.input-area {
+  margin-top: 0.5rem;
+}
+
+.status-message {
   text-align: center;
-  margin-top: 3rem;
+  padding: 3rem;
+  color: #94a3b8;
+  font-size: 1.1rem;
 }
 
+.status-message.error {
+  color: #f87171;
+}
 
-/* ----------- Mobile responsiveness ----------- */
+/* Mobile responsiveness */
 @media (max-width: 600px) {
-  .channel-container {
+  .channel-page {
     margin: 1rem;
     padding: 1rem;
-    gap: 1rem;
   }
 
-  .channel-title {
-    font-size: 1.5rem;
-    text-align: center;
-  }
-
-  .channel-description {
-    font-size: 1rem;
-    text-align: center;
-  }
-
-  .join-button {
-    width: 100%;
-    text-align: center;
-    padding: 0.75rem;
-    font-size: 1rem;
-  }
-
-  .messages-wrapper {
-    max-height: 300px;
-    padding: 0.75rem;
-  }
-
-  .send-form {
-    display: flex;
+  .channel-header {
     flex-direction: column;
-    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .channel-name {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+
+  .channel-desc {
+    text-align: center;
+  }
+
+  .channel-actions {
+    justify-content: center;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    flex: 1;
+    min-width: 120px;
   }
 }

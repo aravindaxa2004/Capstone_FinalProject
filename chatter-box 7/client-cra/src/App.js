@@ -1,3 +1,7 @@
+/**
+ * Main Application Component
+ * Handles routing and protected route logic
+ */
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -6,48 +10,78 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import Channel from './pages/Channel';
 import { useAuth } from './context/AuthContext';
+import './App.css';
 
-// Protect routes so only authenticated users can access
-function ProtectedRoute({ children }) {
+// Component to guard private routes
+function PrivateRoute({ children }) {
   const { token } = useAuth();
-  return token ? children : <Navigate to="/login" replace />;
+  
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
 }
 
-// Redirect logged-in users away from login/register
-function PublicRoute({ children }) {
+// Component to redirect authenticated users from public routes
+function GuestRoute({ children }) {
   const { token } = useAuth();
-  return token ? <Navigate to="/" replace /> : children;
+  
+  if (token) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
 }
 
-export default function App() {
+function App() {
   return (
-    <>
+    <div className="app-container">
       <Navbar />
-      <Routes>
-        {/* Public routes */}
-        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-
-        {/* Protected routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/channels/:id"
-          element={
-            <ProtectedRoute>
-              <Channel />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-
-      </Routes>
-    </>
+      <main className="main-content">
+        <Routes>
+          {/* Guest-only routes */}
+          <Route
+            path="/register"
+            element={
+              <GuestRoute>
+                <Register />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <Login />
+              </GuestRoute>
+            }
+          />
+          
+          {/* Protected routes */}
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <Home />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/channels/:id"
+            element={
+              <PrivateRoute>
+                <Channel />
+              </PrivateRoute>
+            }
+          />
+          
+          {/* Fallback route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </div>
   );
 }
+
+export default App;

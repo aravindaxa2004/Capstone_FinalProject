@@ -1,15 +1,37 @@
+/**
+ * User Model Schema
+ * Defines the structure for user accounts in the system
+ */
 import mongoose from 'mongoose';
 
-// User schema definition
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true }, // Unique username
-  email:    { type: String, required: true, unique: true }, // Unique email address
-  password: { type: String, required: true }, // Hashed password
-  joinedChannels: [
-    { type: mongoose.Schema.Types.ObjectId, ref: 'Channel' } // Channels the user has joined
-  ]
-}, { timestamps: true }); // Adds createdAt and updatedAt fields
+const userDefinition = new mongoose.Schema({
+  username: {
+    type: String,
+    required: [true, 'Username is mandatory'],
+    unique: true,
+    trim: true,
+    minlength: [3, 'Username must contain at least 3 characters']
+  },
+  email: {
+    type: String,
+    required: [true, 'Email address is mandatory'],
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+  password: {
+    type: String,
+    required: [true, 'Password is mandatory'],
+    minlength: [6, 'Password must be at least 6 characters']
+  },
+  joinedChannels: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Channel'
+  }]
+}, {
+  timestamps: true
+});
 
-const User = mongoose.model('User', userSchema);
+const UserModel = mongoose.model('User', userDefinition);
 
-export default User;
+export default UserModel;

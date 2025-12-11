@@ -1,52 +1,72 @@
-import React, { createContext, useContext, useState } from 'react';
+/**
+ * Authentication Context
+ * Manages user authentication state across the application
+ */
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Safe function to get user from localStorage
-  const getUserFromStorage = () => {
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) return null;
+  // Initialize user state from localStorage
+  const [currentUser, setCurrentUser] = useState(() => {
     try {
-      return JSON.parse(storedUser);
-    } catch (err) {
-      console.warn('Failed to parse user from localStorage:', err);
-      localStorage.removeItem('user'); // remove invalid data
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (parseError) {
+      console.warn('Failed to parse stored user data');
+      localStorage.removeItem('user');
       return null;
     }
-  };
+  });
+  
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem('token') || '';
+  });
 
-  const [user, setUser] = useState(getUserFromStorage());
-  const [token, setToken] = useState(localStorage.getItem('token') || '');
-
-  // Login function saves user and token in state and localStorage
-  const login = (userData, jwt) => {
-    if (!userData || !jwt) {
-      console.warn('login called with invalid user or token:', userData, jwt);
-      return;
+  // Handle user login
+  const login = useCallback((userData, authToken) => {
+    if (!userData || !authToken) {
+      console.error('Invalid login credentials provided');
+      return false;
     }
-    setUser(userData);
-    setToken(jwt);
+    
+    setCurrentUser(userData);
+    setToken(authToken);
     localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', jwt);
-  };
+    localStorage.setItem('token', authToken);
+    return true;
+  }, []);
 
-  // Logout clears user and token from state and localStorage
-  const logout = () => {
-    setUser(null);
+  // Handle user logout
+  const logout = useCallback(() => {
+    setCurrentUser(null);
     setToken('');
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+  }, []);
+
+  const contextValue = {
+    user: currentUser,
+    token,
+    login,
+    logout,
+    isAuthenticated: !!token
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-// Custom hook to access auth context easily
+// Custom hook for accessing auth context
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  
+  return context;
 }

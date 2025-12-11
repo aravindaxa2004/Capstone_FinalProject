@@ -1,13 +1,35 @@
+/**
+ * Message Model Schema
+ * Defines the structure for chat messages within channels
+ */
 import mongoose from 'mongoose';
 
-// Message schema definition
-const messageSchema = new mongoose.Schema({
-  content:   { type: String, required: true }, // Message text
-  sender:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Sender's user ID
-  channelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Channel', required: true }, // Channel the message belongs to
-  timestamp: { type: Date, default: Date.now } // Time the message was sent
+const messageDefinition = new mongoose.Schema({
+  content: {
+    type: String,
+    required: [true, 'Message content cannot be empty'],
+    trim: true,
+    maxlength: [2000, 'Message cannot exceed 2000 characters']
+  },
+  sender: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'Sender information is required']
+  },
+  channelId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Channel',
+    required: [true, 'Channel reference is required']
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-const Message = mongoose.model('Message', messageSchema);
+// Create index for efficient message retrieval by channel
+messageDefinition.index({ channelId: 1, timestamp: 1 });
 
-export default Message;
+const MessageModel = mongoose.model('Message', messageDefinition);
+
+export default MessageModel;
